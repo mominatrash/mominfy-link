@@ -54,13 +54,16 @@
   <p class="note">Don't have Mominfy? Ask whoever sent you this link.<span class="second" dir="rtl" lang="ar">ما عندك <bdi>Mominfy</bdi>؟ اطلبه من الشخص اللي بعتلك الرابط.</span></p>
 </main>
 <script>
-  // The song comes in the address: v = YouTube video, and for a song with no video, t = title and
-  // a = artist. New links carry only the video, so they stay short in chats; the page looks up the
-  // name and cover itself. The app is opened through its own mominfy://song address.
+  // What the link is for comes in the address: v = YouTube video, and for a song with no video,
+  // t = title and a = artist; l = a shared playlist; j = a Jam to listen along to. Links stay short
+  // in chats, and the page looks up names and covers itself. The app is opened through its own
+  // mominfy://song address with the same details.
   var params = new URLSearchParams(location.search);
   var video = params.get('v');
   var title = params.get('t');
   var artist = params.get('a');
+  var playlist = params.get('l');
+  var jam = params.get('j');
   var valid = video && /^[\w-]{11}$/.test(video);
 
   function show(name, by) {
@@ -89,6 +92,27 @@
         .catch(function () {});
     }
   }
+
+  // A shared playlist is public in Mominfy's database; its name and first cover show here.
+  if (playlist && /^[\w-]{6,40}$/.test(playlist)) {
+    show('Shared playlist', 'قائمة مشتركة');
+    fetch('https://firestore.googleapis.com/v1/projects/mominfy-e6fb0/databases/(default)/documents/shared/' + playlist)
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (found) {
+        if (!found || !found.fields) return;
+        var songs = ((found.fields.songs || {}).arrayValue || {}).values || [];
+        show((found.fields.name || {}).stringValue, songs.length + (songs.length === 1 ? ' song' : ' songs'));
+        var first = songs[0] && songs[0].mapValue && songs[0].mapValue.fields;
+        var id = first && first.id && first.id.stringValue;
+        if (id) {
+          var cover = document.getElementById('cover');
+          cover.src = 'https://i.ytimg.com/vi/' + id + '/hqdefault.jpg';
+          cover.hidden = false;
+        }
+      })
+      .catch(function () {});
+  }
+  if (jam && /^[A-Za-z0-9]{6}$/.test(jam)) show('Listen along · ' + jam.toUpperCase(), 'اسمع مع صديقك');
 
   var query = location.search.slice(1);
   // Android's Chrome opens apps through an intent address; without the app it stays here.
