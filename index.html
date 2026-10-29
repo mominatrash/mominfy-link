@@ -4,14 +4,20 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Mominfy</title>
-<meta name="description" content="Open this song in Mominfy · افتح هذه الأغنية في Mominfy">
-<meta property="og:title" content="Mominfy">
-<meta property="og:description" content="Open this song in Mominfy · افتح هذه الأغنية في Mominfy">
+<meta name="description" content="Listen to this song in Mominfy · اسمع هذه الأغنية في Mominfy">
+<!-- What chat apps show for the link: the app's name and icon on a tidy card. -->
+<meta property="og:type" content="music.song">
+<meta property="og:site_name" content="Mominfy">
+<meta property="og:title" content="Listen on Mominfy · اسمعها على Mominfy">
+<meta property="og:description" content="Tap to open the song in Mominfy">
 <meta property="og:image" content="https://mominatrash.github.io/mominfy-link/icon.png">
-<meta name="theme-color" content="#121212">
+<meta property="og:image:width" content="1024">
+<meta property="og:image:height" content="1024">
+<meta name="twitter:card" content="summary">
+<meta name="theme-color" content="#131110">
 <link rel="icon" href="icon.png">
 <style>
-  :root { --bg: #121212; --card: #1f1f1f; --text: #ffffff; --muted: #b3b3b3; --accent: #1ed760; }
+  :root { --bg: #131110; --card: #1e1b18; --line: #36312c; --text: #f4efe9; --muted: #a9a39a; --accent: #e8c9a0; --on-accent: #2a1d0c; }
   * { box-sizing: border-box; }
   body {
     margin: 0; min-height: 100vh; display: flex; align-items: center; justify-content: center;
@@ -19,23 +25,28 @@
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Tahoma, sans-serif;
   }
   main { width: 100%; max-width: 380px; text-align: center; }
-  img { width: 96px; height: 96px; border-radius: 22px; }
-  .song { margin: 28px 0 6px; font-size: 24px; font-weight: 800; line-height: 1.3; overflow-wrap: anywhere; }
-  .artist { color: var(--muted); font-size: 16px; overflow-wrap: anywhere; }
-  .open {
-    display: block; margin: 32px 0 14px; padding: 15px; border-radius: 999px;
-    background: var(--accent); color: #000; font-size: 17px; font-weight: 800; text-decoration: none;
+  .brand { display: inline-flex; align-items: center; gap: 8px; color: var(--muted); font-size: 14px; font-weight: 600; }
+  .brand img { width: 28px; height: 28px; border-radius: 8px; }
+  .cover {
+    display: block; width: 100%; aspect-ratio: 1; margin: 22px 0 0; border-radius: 16px; object-fit: cover;
+    background: var(--card); border: 1px solid var(--line);
   }
-  .youtube { color: var(--text); font-size: 15px; font-weight: 600; }
-  .note { margin-top: 36px; color: var(--muted); font-size: 13px; line-height: 1.6; }
+  .song { margin: 22px 0 6px; font-size: 24px; font-weight: 800; line-height: 1.3; overflow-wrap: anywhere; }
+  .artist { color: var(--muted); font-size: 16px; overflow-wrap: anywhere; min-height: 1.2em; }
+  .open {
+    display: block; margin: 28px 0 14px; padding: 15px; border-radius: 999px;
+    background: var(--accent); color: var(--on-accent); font-size: 17px; font-weight: 800; text-decoration: none;
+  }
+  .youtube { display: inline-block; color: var(--text); font-size: 15px; font-weight: 600; }
+  .note { margin-top: 32px; color: var(--muted); font-size: 13px; line-height: 1.6; }
   .second { display: block; margin-top: 2px; font-size: 0.8em; font-weight: 600; opacity: 0.75; }
-  .youtube { display: inline-block; }
   [hidden] { display: none; }
 </style>
 </head>
 <body>
 <main>
-  <img src="icon.png" alt="Mominfy">
+  <span class="brand"><img src="icon.png" alt="">Mominfy</span>
+  <img class="cover" id="cover" alt="" hidden>
   <div class="song" id="song" dir="auto">Mominfy</div>
   <div class="artist" id="artist" dir="auto"></div>
   <a class="open" id="open" href="#">Open in Mominfy<span class="second" dir="rtl" lang="ar">افتح في <bdi>Mominfy</bdi></span></a>
@@ -43,25 +54,43 @@
   <p class="note">Don't have Mominfy? Ask whoever sent you this link.<span class="second" dir="rtl" lang="ar">ما عندك <bdi>Mominfy</bdi>؟ اطلبه من الشخص اللي بعتلك الرابط.</span></p>
 </main>
 <script>
-  // The song comes in the address: v = YouTube video, t = title, a = artist. The app is opened
-  // through its own mominfy://song address with the same details.
+  // The song comes in the address: v = YouTube video, and for a song with no video, t = title and
+  // a = artist. New links carry only the video, so they stay short in chats; the page looks up the
+  // name and cover itself. The app is opened through its own mominfy://song address.
   var params = new URLSearchParams(location.search);
   var video = params.get('v');
   var title = params.get('t');
   var artist = params.get('a');
-  if (title) {
-    document.getElementById('song').textContent = title;
-    document.title = title + ' · Mominfy';
+  var valid = video && /^[\w-]{11}$/.test(video);
+
+  function show(name, by) {
+    if (name) {
+      document.getElementById('song').textContent = name;
+      document.title = name + ' · Mominfy';
+    }
+    if (by) document.getElementById('artist').textContent = by;
   }
-  if (artist) document.getElementById('artist').textContent = artist;
+  show(title, artist);
+
+  if (valid) {
+    var cover = document.getElementById('cover');
+    cover.src = 'https://i.ytimg.com/vi/' + video + '/hqdefault.jpg';
+    cover.hidden = false;
+    var youtube = document.getElementById('youtube');
+    youtube.href = 'https://youtu.be/' + video;
+    youtube.hidden = false;
+    if (!title) {
+      fetch('https://www.youtube.com/oembed?format=json&url=' + encodeURIComponent('https://www.youtube.com/watch?v=' + video))
+        .then(function (r) { return r.ok ? r.json() : null; })
+        .then(function (info) {
+          if (!info) return;
+          show(info.title, (info.author_name || '').replace(/\s*-\s*Topic$/, '').replace(/VEVO$/, ''));
+        })
+        .catch(function () {});
+    }
+  }
 
   var query = location.search.slice(1);
-  var youtube = video && /^[\w-]{11}$/.test(video) ? 'https://youtu.be/' + video : null;
-  if (youtube) {
-    var link = document.getElementById('youtube');
-    link.href = youtube;
-    link.hidden = false;
-  }
   // Android's Chrome opens apps through an intent address; without the app it stays here.
   var here = location.href.split('#')[0];
   var app = /android/i.test(navigator.userAgent)
