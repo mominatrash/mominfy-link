@@ -55,7 +55,8 @@
 </main>
 <script>
   // What the link is for comes in the address: v = YouTube video, and for a song with no video,
-  // t = title and a = artist; l = a shared playlist; j = a Jam to listen along to. Links stay short
+  // t = title and a = artist; l = a shared playlist; j = a Jam to listen along to; f = a friend's
+  // code. Links stay short
   // in chats, and the page looks up names and covers itself. The app is opened through its own
   // mominfy://song address with the same details.
   var params = new URLSearchParams(location.search);
@@ -64,6 +65,7 @@
   var artist = params.get('a');
   var playlist = params.get('l');
   var jam = params.get('j');
+  var friend = params.get('f');
   var valid = video && /^[\w-]{11}$/.test(video);
 
   function show(name, by) {
@@ -113,6 +115,7 @@
       .catch(function () {});
   }
   if (jam && /^[A-Za-z0-9]{6}$/.test(jam)) show('Listen along · ' + jam.toUpperCase(), 'اسمع مع صديقك');
+  if (friend && /^[A-Za-z0-9]{6}$/.test(friend)) show('Add a friend · ' + friend.toUpperCase(), 'أضف صديقاً لترى ما يسمعه');
 
   var query = location.search.slice(1);
   // Android's Chrome opens apps through an intent address; without the app it stays here.
